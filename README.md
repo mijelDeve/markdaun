@@ -44,13 +44,43 @@ El modo oscuro utiliza una paleta de colores optimizada para reducir la fatiga v
 
 ## Instalación
 
-### Requisitos previos
+### Windows
+
+#### Opción 1: Ejecutable portable (recomendado)
+
+1. Descarga el archivo `Markdaun-1.0.0-Portable.zip` o el ejecutable `Markdaun.exe` de la sección de releases
+2. Extrae el ZIP si es necesario
+3. Ejecuta `Markdaun.exe` directamente - no requiere instalación
+
+#### Opción 2: Construir desde código fuente
+
+1. Asegúrate de tener instalado:
+   - [Node.js 18+](https://nodejs.org/)
+   - [Git](https://git-scm.com/)
+2. Clona el repositorio:
+   ```bash
+   git clone https://github.com/markdaun/markdaun.git
+   cd markdaun
+   ```
+3. Instala las dependencias:
+   ```bash
+   npm install
+   ```
+4. Construye la aplicación:
+   ```bash
+   npm run build
+   ```
+5. El ejecutable se encontrará en `dist/win-unpacked/Markdaun.exe`
+
+### Linux
+
+#### Requisitos previos
 
 - Node.js 18+
 - Git
-- Windows 10/11 (compatible con otros sistemas)
+- npm o yarn
 
-### Pasos
+#### Pasos para instalación
 
 1. Clona el repositorio:
 
@@ -65,22 +95,60 @@ El modo oscuro utiliza una paleta de colores optimizada para reducir la fatiga v
    npm install
    ```
 
-3. Inicia en modo desarrollo:
-
-   ```bash
-   npm run dev
-   ```
-
-4. Construye la aplicación:
+3. Construye la aplicación:
 
    ```bash
    npm run build
    ```
 
-5. Genera el instalador para Windows:
+4. Genera el ejecutable para Linux:
+
    ```bash
-   npm run build:win
+   npm run build:linux
    ```
+
+5. El archivo AppImage se encontrará en la carpeta `dist/`
+
+#### Ejecutar en modo desarrollo
+
+```bash
+npm run dev
+```
+
+#### Notas adicionales para Linux
+
+- En algunas distribuciones puede ser necesario instalar dependencias adicionales:
+
+  ```bash
+  # Debian/Ubuntu
+  sudo apt-get install libgtk-3-0 libnss3 libxss1 libasound2
+
+  # Fedora
+  sudo dnf install gtk3 nss xss alsa-lib
+  ```
+
+- Para hacer el ejecutable portable, puedes ejecutar directamente:
+  ```bash
+  ./dist/linux-unpacked/Markdaun
+  ```
+
+### macOS
+
+1. Clona el repositorio:
+
+   ```bash
+   git clone https://github.com/markdaun/markdaun.git
+   cd markdaun
+   ```
+
+2. Instala las dependencias y construye:
+
+   ```bash
+   npm install
+   npm run build:mac
+   ```
+
+3. El archivo .dmg se encontrará en la carpeta `dist/`
 
 ## Uso
 

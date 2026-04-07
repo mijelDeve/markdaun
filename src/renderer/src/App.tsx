@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
@@ -44,10 +44,6 @@ function App(): JSX.Element {
   );
   const [showGitPanel, setShowGitPanel] = useState(false);
   const [gitLoading, setGitLoading] = useState(false);
-  const [gitMessage, setGitMessage] = useState<{
-    type: "success" | "error";
-    text: string;
-  } | null>(null);
   const [gitStatus, setGitStatus] = useState<{
     branch: string | null;
     isClean: boolean;
@@ -61,6 +57,10 @@ function App(): JSX.Element {
       message: string;
     }[]
   >([]);
+
+  const editorRef = useRef<HTMLTextAreaElement>(null);
+  const previewRef = useRef<HTMLDivElement>(null);
+  const isSyncingRef = useRef(false);
 
   useEffect(() => {
     const savedTheme = localStorage.getItem("markdaun-theme") as
@@ -237,7 +237,6 @@ function App(): JSX.Element {
   const handlePull = useCallback(async () => {
     if (!folderPath) return;
     setGitLoading(true);
-    setGitMessage(null);
     const time = new Date().toLocaleTimeString("es-ES", {
       hour: "2-digit",
       minute: "2-digit",
@@ -245,7 +244,6 @@ function App(): JSX.Element {
 
     const result = await window.api.gitPull(folderPath);
     if (result.success) {
-      setGitMessage({ type: "success", text: "Pull completado" });
       setGitLogs((prev) => [
         ...prev.slice(-19),
         { time, type: "success", message: "Pull completado" },
@@ -267,23 +265,17 @@ function App(): JSX.Element {
         });
       }
     } else {
-      setGitMessage({
-        type: "error",
-        text: result.error || "Error al hacer pull",
-      });
       setGitLogs((prev) => [
         ...prev.slice(-19),
         { time, type: "error", message: `Pull falló: ${result.error}` },
       ]);
     }
     setGitLoading(false);
-    setTimeout(() => setGitMessage(null), 3000);
   }, [folderPath]);
 
   const handlePush = useCallback(async () => {
     if (!folderPath) return;
     setGitLoading(true);
-    setGitMessage(null);
     const time = new Date().toLocaleTimeString("es-ES", {
       hour: "2-digit",
       minute: "2-digit",
@@ -293,13 +285,11 @@ function App(): JSX.Element {
     const status = await window.api.gitStatus(folderPath);
 
     if (!status) {
-      setGitMessage({ type: "error", text: "No es un repositorio Git" });
       setGitLogs((prev) => [
         ...prev.slice(-19),
         { time, type: "error", message: "No es repositorio Git" },
       ]);
       setGitLoading(false);
-      setTimeout(() => setGitMessage(null), 3000);
       return;
     }
 
@@ -329,10 +319,6 @@ function App(): JSX.Element {
         commitMessage,
       );
       if (!commitResult.success) {
-        setGitMessage({
-          type: "error",
-          text: commitResult.error || "Error al hacer commit",
-        });
         setGitLogs((prev) => [
           ...prev.slice(-19),
           {
@@ -342,7 +328,6 @@ function App(): JSX.Element {
           },
         ]);
         setGitLoading(false);
-        setTimeout(() => setGitMessage(null), 3000);
         return;
       }
       setGitLogs((prev) => [
@@ -354,7 +339,6 @@ function App(): JSX.Element {
     // Hacer push
     const result = await window.api.gitPush(folderPath);
     if (result.success) {
-      setGitMessage({ type: "success", text: "Push completado" });
       setGitLogs((prev) => [
         ...prev.slice(-19),
         { time, type: "success", message: "Push completado" },
@@ -374,28 +358,33 @@ function App(): JSX.Element {
         });
       }
     } else {
-      setGitMessage({
-        type: "error",
-        text: result.error || "Error al hacer push",
-      });
       setGitLogs((prev) => [
         ...prev.slice(-19),
         { time, type: "error", message: `Push falló: ${result.error}` },
       ]);
     }
     setGitLoading(false);
-    setTimeout(() => setGitMessage(null), 3000);
   }, [folderPath]);
 
   return (
     <div className={cn("h-screen flex flex-col", theme === "dark" && "dark")}>
       {/* Toolbar */}
-      <div className="flex items-center gap-2 px-4 py-2 border-b bg-card">
-        <Button variant="ghost" size="sm" onClick={handleNewFile}>
+      <div className="flex items-center gap-2 px-4 py-2 border-b bg-card text-card-foreground">
+        <Button
+          variant="ghost"
+          size="sm"
+          className="dark:text-white dark:hover:bg-accent"
+          onClick={handleNewFile}
+        >
           <Plus className="w-4 h-4 mr-1" />
           Nuevo
         </Button>
-        <Button variant="ghost" size="sm" onClick={handleOpenFolder}>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="dark:text-white dark:hover:bg-accent"
+          onClick={handleOpenFolder}
+        >
           <FolderOpen className="w-4 h-4 mr-1" />
           Abrir bóveda
         </Button>
@@ -412,6 +401,7 @@ function App(): JSX.Element {
         <Button
           variant="ghost"
           size="sm"
+          className="dark:text-white dark:hover:bg-accent"
           onClick={handlePull}
           disabled={!folderPath || gitLoading}
         >
@@ -421,6 +411,7 @@ function App(): JSX.Element {
         <Button
           variant="ghost"
           size="sm"
+          className="dark:text-white dark:hover:bg-accent"
           onClick={handlePush}
           disabled={!folderPath || gitLoading}
         >
@@ -432,6 +423,9 @@ function App(): JSX.Element {
           <Button
             variant={viewMode === "edit" ? "secondary" : "ghost"}
             size="sm"
+            className={
+              viewMode !== "edit" ? "dark:text-white dark:hover:bg-accent" : ""
+            }
             onClick={() => setViewMode("edit")}
           >
             <Edit3 className="w-4 h-4" />
@@ -439,6 +433,9 @@ function App(): JSX.Element {
           <Button
             variant={viewMode === "split" ? "secondary" : "ghost"}
             size="sm"
+            className={
+              viewMode !== "split" ? "dark:text-white dark:hover:bg-accent" : ""
+            }
             onClick={() => setViewMode("split")}
           >
             <Columns className="w-4 h-4" />
@@ -446,6 +443,11 @@ function App(): JSX.Element {
           <Button
             variant={viewMode === "preview" ? "secondary" : "ghost"}
             size="sm"
+            className={
+              viewMode !== "preview"
+                ? "dark:text-white dark:hover:bg-accent"
+                : ""
+            }
             onClick={() => setViewMode("preview")}
           >
             <Eye className="w-4 h-4" />
@@ -454,6 +456,7 @@ function App(): JSX.Element {
         <Button
           variant="ghost"
           size="icon"
+          className="dark:text-white dark:hover:bg-accent"
           onClick={() => setTheme((t) => (t === "light" ? "dark" : "light"))}
         >
           {theme === "light" ? (
@@ -465,6 +468,7 @@ function App(): JSX.Element {
         <Button
           variant="ghost"
           size="icon"
+          className="dark:text-white dark:hover:bg-accent"
           onClick={() => setShowGitPanel(true)}
         >
           <GitBranch className="w-4 h-4" />
@@ -542,16 +546,36 @@ function App(): JSX.Element {
               <>
                 {(viewMode === "edit" || viewMode === "split") && (
                   <textarea
+                    ref={editorRef}
                     className="flex-1 p-4 border-r resize-none focus:outline-none bg-background text-foreground"
                     value={activeFile.content}
                     onChange={(e) => handleContentChange(e.target.value)}
                     placeholder="Escribe tu markdown aquí..."
+                    onScroll={(e) => {
+                      if (viewMode !== "split" || isSyncingRef.current) return;
+                      isSyncingRef.current = true;
+                      const target = e.currentTarget;
+                      const scrollRatio =
+                        target.scrollTop /
+                        (target.scrollHeight - target.clientHeight);
+                      if (previewRef.current) {
+                        const previewScrollHeight =
+                          previewRef.current.scrollHeight -
+                          previewRef.current.clientHeight;
+                        previewRef.current.scrollTop =
+                          scrollRatio * previewScrollHeight;
+                      }
+                      setTimeout(() => {
+                        isSyncingRef.current = false;
+                      }, 50);
+                    }}
                   />
                 )}
                 {(viewMode === "preview" || viewMode === "split") && (
                   <ScrollArea
+                    ref={previewRef}
                     className={cn(
-                      "flex-1 p-4",
+                      "flex-1 p-4 bg-background",
                       viewMode === "split" && "border-l",
                     )}
                   >

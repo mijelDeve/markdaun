@@ -148,7 +148,9 @@ export function GitStatusBar({
         <div className="flex items-center gap-3 text-xs">
           <div className="flex items-center gap-1">
             <GitBranch className="w-3 h-3 text-muted-foreground" />
-            <span className="font-medium">{branch || "Sin rama"}</span>
+            <span className="font-medium text-foreground">
+              {branch || "Sin rama"}
+            </span>
           </div>
 
           <div className="flex items-center gap-1 text-muted-foreground">
