@@ -193,6 +193,23 @@ function App(): JSX.Element {
     [handleRefreshTree, tabs],
   );
 
+  const handleDeleteItem = useCallback(
+    async (itemPath: string, isDirectory: boolean) => {
+      const result = await window.api.deleteItem(itemPath, isDirectory);
+      if (result.success) {
+        if (!isDirectory && activeFile?.path === itemPath) {
+          setTabs(tabs.filter((t) => t.path !== itemPath));
+          if (activeTab >= tabs.length) {
+            setActiveTab(Math.max(0, tabs.length - 1));
+          }
+        }
+        await handleRefreshTree();
+      }
+      return result;
+    },
+    [handleRefreshTree, activeFile, tabs, activeTab],
+  );
+
   const handleSave = useCallback(async () => {
     if (!activeFile) return;
 
@@ -530,6 +547,7 @@ function App(): JSX.Element {
           onFileSelect={handleFileSelect}
           onCreateFolder={handleCreateFolder}
           onCreateFile={handleCreateFile}
+          onDeleteItem={handleDeleteItem}
         />
 
         {/* Main content */}

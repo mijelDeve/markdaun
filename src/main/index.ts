@@ -178,6 +178,28 @@ app.whenReady().then(() => {
     },
   );
 
+  ipcMain.handle(
+    "item:delete",
+    async (_, itemPath: string, isDirectory: boolean) => {
+      try {
+        if (!fs.existsSync(itemPath)) {
+          return { success: false, error: "El elemento no existe" };
+        }
+
+        if (isDirectory) {
+          fs.rmSync(itemPath, { recursive: true, force: true });
+        } else {
+          fs.unlinkSync(itemPath);
+        }
+
+        return { success: true };
+      } catch (error) {
+        log.error("Error deleting item:", error);
+        return { success: false, error: "Error al eliminar el elemento" };
+      }
+    },
+  );
+
   ipcMain.handle("file:save", async (_, filePath: string, content: string) => {
     try {
       fs.writeFileSync(filePath, content, "utf-8");

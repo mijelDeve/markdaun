@@ -8,6 +8,7 @@ import {
   Search,
   FolderPlus,
   FilePlus,
+  Trash2,
 } from "lucide-react";
 import { Button } from "./ui/button";
 import { ScrollArea } from "./ui/scroll-area";
@@ -32,6 +33,10 @@ type SidebarProps = {
   onCreateFile: (
     parentPath: string,
     fileName: string,
+  ) => Promise<{ success: boolean; error?: string }>;
+  onDeleteItem: (
+    itemPath: string,
+    isDirectory: boolean,
   ) => Promise<{ success: boolean; error?: string }>;
 };
 
@@ -108,7 +113,20 @@ function TreeNode({
   const isActive = activeFilePath === node.path;
   const isMd = node.name.endsWith(".md") || node.name.endsWith(".markdown");
 
-  if (!isMd) return null;
+  if (!isMd) {
+    return (
+      <div
+        className="flex items-center gap-1 py-1 cursor-pointer hover:bg-accent rounded-md mx-1"
+        style={{ paddingLeft: `${depth * 16 + 24}px` }}
+        onContextMenu={(e) => onContextMenu(e, node)}
+      >
+        <FileText className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+        <span className="text-sm truncate text-foreground whitespace-nowrap">
+          {node.name}
+        </span>
+      </div>
+    );
+  }
 
   return (
     <div
@@ -118,6 +136,7 @@ function TreeNode({
       )}
       style={{ paddingLeft: `${depth * 16 + 24}px` }}
       onClick={() => onFileSelect(node.path)}
+      onContextMenu={(e) => onContextMenu(e, node)}
     >
       <FileText className="w-4 h-4 text-muted-foreground flex-shrink-0" />
       <span className="text-sm truncate text-foreground whitespace-nowrap">
@@ -214,6 +233,35 @@ function InputDialog({
   );
 }
 
+function ConfirmDialog({
+  title,
+  message,
+  onConfirm,
+  onCancel,
+}: {
+  title: string;
+  message: string;
+  onConfirm: () => void;
+  onCancel: () => void;
+}) {
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+      <div className="bg-card border rounded-lg p-4 w-80 shadow-lg">
+        <h3 className="text-sm font-medium mb-2 text-foreground">{title}</h3>
+        <p className="text-sm text-muted-foreground mb-4">{message}</p>
+        <div className="flex justify-end gap-2">
+          <Button size="sm" variant="outline" onClick={onCancel}>
+            Cancelar
+          </Button>
+          <Button size="sm" variant="destructive" onClick={onConfirm}>
+            Eliminar
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function Sidebar({
   folderPath,
   tree,
@@ -221,6 +269,7 @@ export function Sidebar({
   onFileSelect,
   onCreateFolder,
   onCreateFile,
+  onDeleteItem,
 }: SidebarProps) {
   const [expandedPaths, setExpandedPaths] = useState<Set<string>>(new Set());
   const [contextMenu, setContextMenu] = useState<ContextMenuState>({
@@ -234,6 +283,12 @@ export function Sidebar({
   const [dialog, setDialog] = useState<{
     type: "folder" | "file" | null;
     parentPath: string;
+  } | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState<{
+    visible: boolean;
+    itemPath: string | null;
+    itemName: string | null;
+    isDirectory: boolean;
   } | null>(null);
   const contextMenuRef = useRef<HTMLDivElement>(null);
 
@@ -312,6 +367,25 @@ export function Sidebar({
     }
 
     setDialog(null);
+  };
+
+  const handleDeleteItemHere = () => {
+    if (contextMenu.nodePath && contextMenu.nodeName !== null) {
+      setConfirmDelete({
+        visible: true,
+        itemPath: contextMenu.nodePath,
+        itemName: contextMenu.nodeName,
+        isDirectory: contextMenu.isDirectory,
+      });
+    }
+    setContextMenu((prev) => ({ ...prev, visible: false }));
+  };
+
+  const handleConfirmDelete = async () => {
+    if (confirmDelete?.itemPath && confirmDelete?.isDirectory !== undefined) {
+      await onDeleteItem(confirmDelete.itemPath, confirmDelete.isDirectory);
+    }
+    setConfirmDelete(null);
   };
 
   const folderName = folderPath?.split(/[\\/]/).pop() || null;
@@ -405,6 +479,15 @@ export function Sidebar({
             <FilePlus className="w-4 h-4" />
             Crear nuevo archivo
           </button>
+          {contextMenu.nodePath && (
+            <button
+              className="w-full px-3 py-2 text-sm text-left hover:bg-accent flex items-center gap-2 text-destructive"
+              onClick={handleDeleteItemHere}
+            >
+              <Trash2 className="w-4 h-4" />
+              Eliminar
+            </button>
+          )}
         </div>
       )}
 
@@ -421,6 +504,15 @@ export function Sidebar({
           }
           onConfirm={handleConfirmCreate}
           onCancel={() => setDialog(null)}
+        />
+      )}
+
+      {confirmDelete?.visible && (
+        <ConfirmDialog
+          title="Confirmar eliminación"
+          message={`¿Estás seguro de que quieres eliminar "${confirmDelete.itemName}"?${confirmDelete.isDirectory ? " Se eliminará todo su contenido." : ""}`}
+          onConfirm={handleConfirmDelete}
+          onCancel={() => setConfirmDelete(null)}
         />
       )}
     </div>

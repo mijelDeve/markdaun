@@ -65,6 +65,11 @@ const api = {
     fileName: string,
   ): Promise<{ success: boolean; path?: string; error?: string }> =>
     ipcRenderer.invoke("file:create", parentPath, fileName),
+  deleteItem: (
+    itemPath: string,
+    isDirectory: boolean,
+  ): Promise<{ success: boolean; error?: string }> =>
+    ipcRenderer.invoke("item:delete", itemPath, isDirectory),
   saveFile: (filePath: string, content: string): Promise<boolean> =>
     ipcRenderer.invoke("file:save", filePath, content),
   readFile: (filePath: string): Promise<string | null> =>

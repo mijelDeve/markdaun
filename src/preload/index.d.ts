@@ -58,6 +58,10 @@ export interface ElectronAPI {
     parentPath: string,
     fileName: string,
   ) => Promise<{ success: boolean; path?: string; error?: string }>;
+  deleteItem: (
+    itemPath: string,
+    isDirectory: boolean,
+  ) => Promise<{ success: boolean; error?: string }>;
   saveFile: (filePath: string, content: string) => Promise<boolean>;
   readFile: (filePath: string) => Promise<string | null>;
   saveFileDialog: (defaultPath?: string) => Promise<string | null>;
