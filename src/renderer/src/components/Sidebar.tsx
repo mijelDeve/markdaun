@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef, useEffect } from "react";
 import {
   ChevronRight,
   FileText,
@@ -6,6 +6,8 @@ import {
   FolderOpen,
   FolderClosed,
   Search,
+  FolderPlus,
+  FilePlus,
 } from "lucide-react";
 import { Button } from "./ui/button";
 import { ScrollArea } from "./ui/scroll-area";
@@ -23,6 +25,23 @@ type SidebarProps = {
   tree: FileNode[];
   activeFilePath: string | null;
   onFileSelect: (path: string) => void;
+  onCreateFolder: (
+    parentPath: string,
+    folderName: string,
+  ) => Promise<{ success: boolean; error?: string }>;
+  onCreateFile: (
+    parentPath: string,
+    fileName: string,
+  ) => Promise<{ success: boolean; error?: string }>;
+};
+
+type ContextMenuState = {
+  visible: boolean;
+  x: number;
+  y: number;
+  nodePath: string | null;
+  nodeName: string | null;
+  isDirectory: boolean;
 };
 
 function TreeNode({
@@ -33,6 +52,7 @@ function TreeNode({
   expandedPaths,
   onToggle,
   onFileSelect,
+  onContextMenu,
 }: {
   node: FileNode;
   depth: number;
@@ -41,6 +61,7 @@ function TreeNode({
   expandedPaths: Set<string>;
   onToggle: (path: string) => void;
   onFileSelect: (path: string) => void;
+  onContextMenu: (e: React.MouseEvent, node: FileNode) => void;
 }) {
   if (node.isDirectory) {
     return (
@@ -49,6 +70,7 @@ function TreeNode({
           className="flex items-center gap-1 py-1 cursor-pointer hover:bg-accent rounded-md mx-1"
           style={{ paddingLeft: `${depth * 16 + 8}px` }}
           onClick={() => onToggle(node.path)}
+          onContextMenu={(e) => onContextMenu(e, node)}
         >
           <ChevronRight
             className={cn(
@@ -76,6 +98,7 @@ function TreeNode({
               expandedPaths={expandedPaths}
               onToggle={onToggle}
               onFileSelect={onFileSelect}
+              onContextMenu={onContextMenu}
             />
           ))}
       </div>
@@ -138,15 +161,96 @@ function findPathToFile(tree: FileNode[], targetPath: string): string[] {
   return result || [];
 }
 
+function InputDialog({
+  title,
+  placeholder,
+  defaultValue,
+  onConfirm,
+  onCancel,
+}: {
+  title: string;
+  placeholder: string;
+  defaultValue?: string;
+  onConfirm: (value: string) => void;
+  onCancel: () => void;
+}) {
+  const [value, setValue] = useState(defaultValue || "");
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter") {
+      onConfirm(value);
+    } else if (e.key === "Escape") {
+      onCancel();
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+      <div className="bg-card border rounded-lg p-4 w-80 shadow-lg">
+        <h3 className="text-sm font-medium mb-3">{title}</h3>
+        <input
+          type="text"
+          className="w-full px-3 py-2 border rounded-md bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+          placeholder={placeholder}
+          value={value}
+          onChange={(e) => setValue(e.target.value)}
+          onKeyDown={handleKeyDown}
+          autoFocus
+        />
+        <div className="flex justify-end gap-2 mt-4">
+          <Button size="sm" variant="outline" onClick={onCancel}>
+            Cancelar
+          </Button>
+          <Button
+            size="sm"
+            onClick={() => onConfirm(value)}
+            disabled={!value.trim()}
+          >
+            Crear
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function Sidebar({
   folderPath,
   tree,
   activeFilePath,
   onFileSelect,
+  onCreateFolder,
+  onCreateFile,
 }: SidebarProps) {
   const [expandedPaths, setExpandedPaths] = useState<Set<string>>(new Set());
+  const [contextMenu, setContextMenu] = useState<ContextMenuState>({
+    visible: false,
+    x: 0,
+    y: 0,
+    nodePath: null,
+    nodeName: null,
+    isDirectory: false,
+  });
+  const [dialog, setDialog] = useState<{
+    type: "folder" | "file" | null;
+    parentPath: string;
+  } | null>(null);
+  const contextMenuRef = useRef<HTMLDivElement>(null);
 
   const allMdFiles = useMemo(() => getAllFilePaths(tree), [tree]);
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (
+        contextMenuRef.current &&
+        !contextMenuRef.current.contains(e.target as Node)
+      ) {
+        setContextMenu((prev) => ({ ...prev, visible: false }));
+      }
+    };
+    document.addEventListener("click", handleClickOutside);
+    return () => document.removeEventListener("click", handleClickOutside);
+  }, []);
 
   const handleToggle = (path: string) => {
     setExpandedPaths((prev) => {
@@ -170,10 +274,50 @@ export function Sidebar({
     setExpandedPaths(new Set(pathsToExpand));
   };
 
+  const handleContextMenu = (e: React.MouseEvent, node: FileNode) => {
+    e.preventDefault();
+    setContextMenu({
+      visible: true,
+      x: e.clientX,
+      y: e.clientY,
+      nodePath: node.path,
+      nodeName: node.name,
+      isDirectory: node.isDirectory,
+    });
+  };
+
+  const handleCreateFolderHere = () => {
+    const path = contextMenu.nodePath || folderPath;
+    if (path) {
+      setDialog({ type: "folder", parentPath: path });
+    }
+    setContextMenu((prev) => ({ ...prev, visible: false }));
+  };
+
+  const handleCreateFileHere = () => {
+    const path = contextMenu.nodePath || folderPath;
+    if (path) {
+      setDialog({ type: "file", parentPath: path });
+    }
+    setContextMenu((prev) => ({ ...prev, visible: false }));
+  };
+
+  const handleConfirmCreate = async (name: string) => {
+    if (!dialog) return;
+
+    if (dialog.type === "folder") {
+      await onCreateFolder(dialog.parentPath, name);
+    } else if (dialog.type === "file") {
+      await onCreateFile(dialog.parentPath, name);
+    }
+
+    setDialog(null);
+  };
+
   const folderName = folderPath?.split(/[\\/]/).pop() || null;
 
   return (
-    <div className="w-64 flex-shrink-0 bg-card border-r border-border flex flex-col">
+    <div className="w-64 flex-shrink-0 bg-card border-r border-border flex flex-col relative">
       {folderName ? (
         <div className="p-2 border-b border-border flex gap-2">
           <Button
@@ -197,7 +341,19 @@ export function Sidebar({
       ) : null}
 
       {folderName && (
-        <div className="px-3 py-2 text-sm font-medium text-foreground border-b border-border flex items-center gap-2">
+        <div
+          className="px-3 py-2 text-sm font-medium text-foreground border-b border-border flex items-center gap-2 cursor-pointer hover:bg-accent"
+          onClick={() =>
+            setContextMenu({
+              visible: true,
+              x: 100,
+              y: 100,
+              nodePath: folderPath,
+              nodeName: folderName,
+              isDirectory: true,
+            })
+          }
+        >
           <Folder className="w-4 h-4 text-yellow-500" />
           {folderName}
         </div>
@@ -222,11 +378,51 @@ export function Sidebar({
                 expandedPaths={expandedPaths}
                 onToggle={handleToggle}
                 onFileSelect={onFileSelect}
+                onContextMenu={handleContextMenu}
               />
             ))
           )}
         </div>
       </ScrollArea>
+
+      {contextMenu.visible && (
+        <div
+          ref={contextMenuRef}
+          className="fixed bg-card border rounded-md shadow-lg py-1 z-50 min-w-[180px]"
+          style={{ left: contextMenu.x, top: contextMenu.y }}
+        >
+          <button
+            className="w-full px-3 py-2 text-sm text-left hover:bg-accent flex items-center gap-2"
+            onClick={handleCreateFolderHere}
+          >
+            <FolderPlus className="w-4 h-4" />
+            Crear nueva carpeta
+          </button>
+          <button
+            className="w-full px-3 py-2 text-sm text-left hover:bg-accent flex items-center gap-2"
+            onClick={handleCreateFileHere}
+          >
+            <FilePlus className="w-4 h-4" />
+            Crear nuevo archivo
+          </button>
+        </div>
+      )}
+
+      {dialog && (
+        <InputDialog
+          title={dialog.type === "folder" ? "Nueva carpeta" : "Nuevo archivo"}
+          placeholder={
+            dialog.type === "folder"
+              ? "Nombre de la carpeta"
+              : "Nombre del archivo"
+          }
+          defaultValue={
+            dialog.type === "file" ? "nuevo-archivo" : "nueva-carpeta"
+          }
+          onConfirm={handleConfirmCreate}
+          onCancel={() => setDialog(null)}
+        />
+      )}
     </div>
   );
 }

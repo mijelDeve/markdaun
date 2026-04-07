@@ -50,6 +50,14 @@ export interface ElectronAPI {
   openFile: () => Promise<FileData | null>;
   openFolder: () => Promise<FolderData | null>;
   getFolderTree: (folderPath: string) => Promise<FileNode[]>;
+  createFolder: (
+    parentPath: string,
+    folderName: string,
+  ) => Promise<{ success: boolean; path?: string; error?: string }>;
+  createFile: (
+    parentPath: string,
+    fileName: string,
+  ) => Promise<{ success: boolean; path?: string; error?: string }>;
   saveFile: (filePath: string, content: string) => Promise<boolean>;
   readFile: (filePath: string) => Promise<string | null>;
   saveFileDialog: (defaultPath?: string) => Promise<string | null>;

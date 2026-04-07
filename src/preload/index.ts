@@ -55,6 +55,16 @@ const api = {
     ipcRenderer.invoke("dialog:openFolder"),
   getFolderTree: (folderPath: string): Promise<FileNode[]> =>
     ipcRenderer.invoke("folder:getTree", folderPath),
+  createFolder: (
+    parentPath: string,
+    folderName: string,
+  ): Promise<{ success: boolean; path?: string; error?: string }> =>
+    ipcRenderer.invoke("folder:create", parentPath, folderName),
+  createFile: (
+    parentPath: string,
+    fileName: string,
+  ): Promise<{ success: boolean; path?: string; error?: string }> =>
+    ipcRenderer.invoke("file:create", parentPath, fileName),
   saveFile: (filePath: string, content: string): Promise<boolean> =>
     ipcRenderer.invoke("file:save", filePath, content),
   readFile: (filePath: string): Promise<string | null> =>

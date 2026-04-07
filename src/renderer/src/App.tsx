@@ -147,6 +147,52 @@ function App(): JSX.Element {
     [tabs],
   );
 
+  const handleRefreshTree = useCallback(async () => {
+    if (folderPath) {
+      const tree = await window.api.getFolderTree(folderPath);
+      setFileTree(tree);
+    }
+  }, [folderPath]);
+
+  const handleCreateFolder = useCallback(
+    async (parentPath: string, folderName: string) => {
+      const result = await window.api.createFolder(parentPath, folderName);
+      if (result.success) {
+        await handleRefreshTree();
+      }
+      return result;
+    },
+    [handleRefreshTree],
+  );
+
+  const handleCreateFile = useCallback(
+    async (parentPath: string, fileName: string) => {
+      const result = await window.api.createFile(parentPath, fileName);
+      if (result.success && result.path) {
+        await handleRefreshTree();
+        const existingIndex = tabs.findIndex((t) => t.path === result.path);
+        if (existingIndex >= 0) {
+          setActiveTab(existingIndex);
+        } else {
+          const content = await window.api.readFile(result.path);
+          if (content !== null) {
+            const fileName = result.path.split(/[\\/]/).pop() || "Sin título";
+            const newTab: FileTab = {
+              name: fileName,
+              path: result.path,
+              content,
+              modified: false,
+            };
+            setTabs([...tabs, newTab]);
+            setActiveTab(tabs.length);
+          }
+        }
+      }
+      return result;
+    },
+    [handleRefreshTree, tabs],
+  );
+
   const handleSave = useCallback(async () => {
     if (!activeFile) return;
 
@@ -482,6 +528,8 @@ function App(): JSX.Element {
           tree={fileTree}
           activeFilePath={activeFile?.path || null}
           onFileSelect={handleFileSelect}
+          onCreateFolder={handleCreateFolder}
+          onCreateFile={handleCreateFile}
         />
 
         {/* Main content */}

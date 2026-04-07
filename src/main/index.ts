@@ -135,6 +135,49 @@ app.whenReady().then(() => {
     }
   });
 
+  ipcMain.handle(
+    "folder:create",
+    async (_, parentPath: string, folderName: string) => {
+      try {
+        const newFolderPath = join(parentPath, folderName);
+        if (fs.existsSync(newFolderPath)) {
+          return {
+            success: false,
+            error: "Ya existe una carpeta con ese nombre",
+          };
+        }
+        fs.mkdirSync(newFolderPath);
+        return { success: true, path: newFolderPath };
+      } catch (error) {
+        log.error("Error creating folder:", error);
+        return { success: false, error: "Error al crear la carpeta" };
+      }
+    },
+  );
+
+  ipcMain.handle(
+    "file:create",
+    async (_, parentPath: string, fileName: string) => {
+      try {
+        const fullFileName = fileName.endsWith(".md")
+          ? fileName
+          : `${fileName}.md`;
+        const newFilePath = join(parentPath, fullFileName);
+        if (fs.existsSync(newFilePath)) {
+          return {
+            success: false,
+            error: "Ya existe un archivo con ese nombre",
+          };
+        }
+        fs.writeFileSync(newFilePath, "", "utf-8");
+        return { success: true, path: newFilePath };
+      } catch (error) {
+        log.error("Error creating file:", error);
+        return { success: false, error: "Error al crear el archivo" };
+      }
+    },
+  );
+
   ipcMain.handle("file:save", async (_, filePath: string, content: string) => {
     try {
       fs.writeFileSync(filePath, content, "utf-8");
