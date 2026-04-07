@@ -187,7 +187,7 @@ function InputDialog({
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
       <div className="bg-card border rounded-lg p-4 w-80 shadow-lg">
-        <h3 className="text-sm font-medium mb-3">{title}</h3>
+        <h3 className="text-sm font-medium mb-3 text-foreground">{title}</h3>
         <input
           type="text"
           className="w-full px-3 py-2 border rounded-md bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary"
@@ -392,14 +392,14 @@ export function Sidebar({
           style={{ left: contextMenu.x, top: contextMenu.y }}
         >
           <button
-            className="w-full px-3 py-2 text-sm text-left hover:bg-accent flex items-center gap-2"
+            className="w-full px-3 py-2 text-sm text-left hover:bg-accent flex items-center gap-2 text-foreground"
             onClick={handleCreateFolderHere}
           >
             <FolderPlus className="w-4 h-4" />
             Crear nueva carpeta
           </button>
           <button
-            className="w-full px-3 py-2 text-sm text-left hover:bg-accent flex items-center gap-2"
+            className="w-full px-3 py-2 text-sm text-left hover:bg-accent flex items-center gap-2 text-foreground"
             onClick={handleCreateFileHere}
           >
             <FilePlus className="w-4 h-4" />
