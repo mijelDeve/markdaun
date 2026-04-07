@@ -482,7 +482,6 @@ function App(): JSX.Element {
           tree={fileTree}
           activeFilePath={activeFile?.path || null}
           onFileSelect={handleFileSelect}
-          onOpenFolder={handleOpenFolder}
         />
 
         {/* Main content */}
@@ -578,6 +577,24 @@ function App(): JSX.Element {
                       "flex-1 p-4 bg-background",
                       viewMode === "split" && "border-l",
                     )}
+                    onScroll={(e) => {
+                      if (viewMode !== "split" || isSyncingRef.current) return;
+                      isSyncingRef.current = true;
+                      const target = e.currentTarget;
+                      const scrollRatio =
+                        target.scrollTop /
+                        (target.scrollHeight - target.clientHeight);
+                      if (editorRef.current) {
+                        const editorScrollHeight =
+                          editorRef.current.scrollHeight -
+                          editorRef.current.clientHeight;
+                        editorRef.current.scrollTop =
+                          scrollRatio * editorScrollHeight;
+                      }
+                      setTimeout(() => {
+                        isSyncingRef.current = false;
+                      }, 50);
+                    }}
                   >
                     <div className={cn("preview", theme === "dark" && "dark")}>
                       <ReactMarkdown
