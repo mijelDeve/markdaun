@@ -53,6 +53,8 @@ const api = {
     ipcRenderer.invoke("dialog:openFile"),
   openFolder: (): Promise<FolderData | null> =>
     ipcRenderer.invoke("dialog:openFolder"),
+  openImageDialog: (): Promise<string | null> =>
+    ipcRenderer.invoke("dialog:openImage"),
   getFolderTree: (folderPath: string): Promise<FileNode[]> =>
     ipcRenderer.invoke("folder:getTree", folderPath),
   createFolder: (
@@ -70,6 +72,10 @@ const api = {
     isDirectory: boolean,
   ): Promise<{ success: boolean; error?: string }> =>
     ipcRenderer.invoke("item:delete", itemPath, isDirectory),
+  getImageBase64: (
+    imagePath: string,
+  ): Promise<{ success: boolean; dataUrl?: string; error?: string }> =>
+    ipcRenderer.invoke("image:getBase64", imagePath),
   saveFile: (filePath: string, content: string): Promise<boolean> =>
     ipcRenderer.invoke("file:save", filePath, content),
   readFile: (filePath: string): Promise<string | null> =>

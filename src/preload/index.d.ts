@@ -49,6 +49,7 @@ export type GitConnectionTest = {
 export interface ElectronAPI {
   openFile: () => Promise<FileData | null>;
   openFolder: () => Promise<FolderData | null>;
+  openImageDialog: () => Promise<string | null>;
   getFolderTree: (folderPath: string) => Promise<FileNode[]>;
   createFolder: (
     parentPath: string,
@@ -62,6 +63,9 @@ export interface ElectronAPI {
     itemPath: string,
     isDirectory: boolean,
   ) => Promise<{ success: boolean; error?: string }>;
+  getImageBase64: (
+    imagePath: string,
+  ) => Promise<{ success: boolean; dataUrl?: string; error?: string }>;
   saveFile: (filePath: string, content: string) => Promise<boolean>;
   readFile: (filePath: string) => Promise<string | null>;
   saveFileDialog: (defaultPath?: string) => Promise<string | null>;

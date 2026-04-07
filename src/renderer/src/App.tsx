@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import remarkWikiLink from "@flowershow/remark-wiki-link";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { oneDark } from "react-syntax-highlighter/dist/esm/styles/prism";
 import {
@@ -17,6 +18,7 @@ import {
   GitBranch,
   Download,
   Upload,
+  Image,
 } from "lucide-react";
 import { Button } from "./components/ui/button";
 import { ScrollArea } from "./components/ui/scroll-area";
@@ -25,6 +27,36 @@ import { GitPanel } from "./components/GitPanel";
 import { GitStatusBar } from "./components/GitStatusBar";
 import { cn } from "./lib/utils";
 import type { FileNode } from "../preload/index";
+
+function LocalImage({ src, alt }: { src: string; alt: string }) {
+  const [dataUrl, setDataUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    const loadImage = async () => {
+      try {
+        const result = await window.api.getImageBase64(src);
+        if (result.success && result.dataUrl) {
+          setDataUrl(result.dataUrl);
+        }
+      } catch (err) {
+        console.error("Error loading image:", err);
+      }
+    };
+    loadImage();
+  }, [src]);
+
+  if (!dataUrl) {
+    return null;
+  }
+
+  return (
+    <img
+      src={dataUrl}
+      alt={alt}
+      className="max-w-full h-auto rounded-md my-2"
+    />
+  );
+}
 
 type FileTab = {
   name: string;
@@ -252,6 +284,32 @@ function App(): JSX.Element {
     },
     [activeTab, tabs],
   );
+
+  const handleInsertImage = useCallback(async () => {
+    if (!activeFile || !folderPath) return;
+
+    const imagePath = await window.api.openImageDialog();
+    if (!imagePath) return;
+
+    const relativePath = imagePath
+      .replace(folderPath, "")
+      .replace(/^[\\/]/, "");
+    const markdownImage = `![[${relativePath}]]`;
+
+    const textarea = document.querySelector("textarea");
+    if (textarea) {
+      const start = textarea.selectionStart;
+      const end = textarea.selectionEnd;
+      const content = activeFile.content;
+      const newContent =
+        content.slice(0, start) + markdownImage + content.slice(end);
+      setTabs(
+        tabs.map((t, i) =>
+          i === activeTab ? { ...t, content: newContent, modified: true } : t,
+        ),
+      );
+    }
+  }, [activeFile, activeTab, folderPath, tabs]);
 
   const handleCloseTab = useCallback(
     (index: number) => {
@@ -482,6 +540,16 @@ function App(): JSX.Element {
           Push
         </Button>
         <div className="flex-1" />
+        <Button
+          variant="ghost"
+          size="icon"
+          className="dark:text-white dark:hover:bg-accent"
+          title="Insertar imagen"
+          onClick={handleInsertImage}
+          disabled={!activeFile}
+        >
+          <Image className="w-4 h-4" />
+        </Button>
         <div className="flex items-center gap-1 rounded-md bg-muted p-1">
           <Button
             variant={viewMode === "edit" ? "secondary" : "ghost"}
@@ -664,7 +732,21 @@ function App(): JSX.Element {
                   >
                     <div className={cn("preview", theme === "dark" && "dark")}>
                       <ReactMarkdown
-                        remarkPlugins={[remarkGfm]}
+                        remarkPlugins={[
+                          remarkGfm,
+                          [
+                            remarkWikiLink,
+                            {
+                              hrefTemplate: (permalink: string) =>
+                                `./${permalink}`,
+                              pageResolver: (name: string) => [
+                                name.replace(/ /g, "-"),
+                              ],
+                              aliasDivider: "|",
+                              embed: true,
+                            },
+                          ],
+                        ]}
                         components={{
                           code({ node, className, children, ...props }) {
                             const match = /language-(\w+)/.exec(
@@ -682,6 +764,85 @@ function App(): JSX.Element {
                               <code className={className} {...props}>
                                 {children}
                               </code>
+                            );
+                          },
+                          a({ href, children }) {
+                            if (href && !href.startsWith("http")) {
+                              const imageExtensions = [
+                                ".png",
+                                ".jpg",
+                                ".jpeg",
+                                ".gif",
+                                ".webp",
+                                ".svg",
+                                ".bmp",
+                              ];
+                              const isImage =
+                                imageExtensions.some((ext) =>
+                                  href.toLowerCase().includes(ext),
+                                ) || href.includes(".");
+                              if (
+                                isImage ||
+                                href.startsWith("/") ||
+                                href.startsWith("./") ||
+                                href.startsWith("../")
+                              ) {
+                                const fullPath = href.startsWith("/")
+                                  ? `${folderPath}${href}`
+                                  : href.startsWith("./")
+                                    ? `${folderPath}/${href.slice(2)}`
+                                    : href.startsWith("../")
+                                      ? `${folderPath}/${href.slice(3)}`
+                                      : `${folderPath}/${href}`;
+                                return (
+                                  <img
+                                    src={`file://${fullPath.replace(/\\/g, "/")}`}
+                                    alt={String(children)}
+                                    className="max-w-full h-auto rounded-md my-2"
+                                  />
+                                );
+                              }
+                            }
+                            return (
+                              <a
+                                href={href}
+                                className="text-blue-500 hover:underline"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                              >
+                                {children}
+                              </a>
+                            );
+                          },
+                          img({ src, alt }) {
+                            if (!src) return null;
+
+                            if (
+                              src.startsWith("http://") ||
+                              src.startsWith("https://")
+                            ) {
+                              return (
+                                <img
+                                  src={src}
+                                  alt={alt || ""}
+                                  className="max-w-full h-auto rounded-md my-2"
+                                />
+                              );
+                            }
+
+                            let fullPath: string;
+                            if (src.startsWith("/")) {
+                              fullPath = `${folderPath}${src}`;
+                            } else if (src.startsWith("./")) {
+                              fullPath = `${folderPath}/${src.slice(2)}`;
+                            } else if (src.startsWith("../")) {
+                              fullPath = `${folderPath}/${src.slice(3)}`;
+                            } else {
+                              fullPath = `${folderPath}/${src}`;
+                            }
+
+                            return (
+                              <LocalImage src={fullPath} alt={alt || ""} />
                             );
                           },
                         }}

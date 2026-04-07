@@ -86,6 +86,24 @@ app.whenReady().then(() => {
     return null;
   });
 
+  ipcMain.handle("dialog:openImage", async () => {
+    const result = await dialog.showOpenDialog({
+      properties: ["openFile"],
+      filters: [
+        {
+          name: "Images",
+          extensions: ["png", "jpg", "jpeg", "gif", "webp", "svg", "bmp"],
+        },
+        { name: "All Files", extensions: ["*"] },
+      ],
+    });
+
+    if (!result.canceled && result.filePaths.length > 0) {
+      return result.filePaths[0];
+    }
+    return null;
+  });
+
   ipcMain.handle("folder:getTree", async (_, folderPath: string) => {
     try {
       interface FileNode {
@@ -199,6 +217,26 @@ app.whenReady().then(() => {
       }
     },
   );
+
+  ipcMain.handle("image:getBase64", async (_, imagePath: string) => {
+    try {
+      if (!fs.existsSync(imagePath)) {
+        return { success: false, error: "La imagen no existe" };
+      }
+
+      const ext = imagePath.split(".").pop()?.toLowerCase() || "png";
+      const mimeType = ext === "jpg" ? "jpeg" : ext;
+      const buffer = fs.readFileSync(imagePath);
+      const base64 = buffer.toString("base64");
+      return {
+        success: true,
+        dataUrl: `data:image/${mimeType};base64,${base64}`,
+      };
+    } catch (error) {
+      log.error("Error reading image:", error);
+      return { success: false, error: "Error al leer la imagen" };
+    }
+  });
 
   ipcMain.handle("file:save", async (_, filePath: string, content: string) => {
     try {
