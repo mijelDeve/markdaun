@@ -101,18 +101,59 @@ El modo oscuro utiliza una paleta de colores optimizada para reducir la fatiga v
    npm run build
    ```
 
-4. Genera el ejecutable para Linux:
+4. Genera los instaladores para Linux:
 
    ```bash
    npm run build:linux
    ```
 
-5. El archivo AppImage se encontrará en la carpeta `dist/`
+5. En la carpeta `dist/` encontrarás:
+   - `Markdaun-1.0.0.AppImage` - AppImage (funciona en todas las distribuciones)
+   - `Markdaun-1.0.0.deb` - Paquete Debian/Ubuntu
+   - `Markdaun-1.0.0.rpm` - Paquete Fedora/RHEL
 
-#### Ejecutar en modo desarrollo
+#### Cómo instalar según tu distribución
+
+**Arch Linux / Manjaro (usando AppImage):**
 
 ```bash
-npm run dev
+# Haz ejecutable el AppImage
+chmod +x Markdaun-1.0.0.AppImage
+
+# Opción A: Ejecutar directamente desde cualquier ubicación
+./Markdaun-1.0.0.AppImage
+
+# Opción B: Instalar en el sistema (recomendado)
+# Copiar a una carpeta en PATH
+sudo cp Markdaun-1.0.0.AppImage /usr/local/bin/markdaun
+sudo chmod +x /usr/local/bin/markdaun
+
+# Opción C: Crear entrada en el menú (archivo .desktop)
+mkdir -p ~/.local/share/applications
+cat > ~/.local/share/applications/markdaun.desktop << 'EOF'
+[Desktop Entry]
+Name=Markdaun
+Comment=Editor de Markdown con Git
+Exec=/usr/local/bin/markdaun
+Icon=text-markdown
+Terminal=false
+Type=Application
+Categories=Utility;TextEditor;
+EOF
+```
+
+**Ubuntu/Debian (usando .deb):**
+
+```bash
+sudo dpkg -i Markdaun-1.0.0.deb
+# Si hay dependencias faltantes:
+sudo apt-get install -f
+```
+
+**Fedora/RHEL (usando .rpm):**
+
+```bash
+sudo dnf install Markdaun-1.0.0.rpm
 ```
 
 #### Notas adicionales para Linux
@@ -123,13 +164,16 @@ npm run dev
   # Debian/Ubuntu
   sudo apt-get install libgtk-3-0 libnss3 libxss1 libasound2
 
-  # Fedora
-  sudo dnf install gtk3 nss xss alsa-lib
+  # Fedora/RHEL
+  sudo dnf install gtk3 nss xorg-x11-libs alsa-lib
+
+  # Arch/Manjaro
+  sudo pacman -S gtk3 nss alsa-lib
   ```
 
-- Para hacer el ejecutable portable, puedes ejecutar directamente:
+- Para ejecutar en modo desarrollo:
   ```bash
-  ./dist/linux-unpacked/Markdaun
+  npm run dev
   ```
 
 ### macOS

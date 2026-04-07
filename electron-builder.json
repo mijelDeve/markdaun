@@ -25,6 +25,35 @@
     "artifactName": "${productName}-${version}.${ext}"
   },
   "linux": {
+    "target": [
+      "AppImage",
+      "deb",
+      "rpm"
+    ],
+    "artifactName": "${productName}-${version}.${ext}",
+    "category": "Utility"
+  },
+  "deb": {
+    "depends": ["libgtk-3-0", "libnss3", "libxss1", "libasound2"]
+  },
+  "rpm": {
+    "depends": ["gtk3", "nss", "xorg-x11-libs", "alsa-lib"]
+  }
+}
+    ],
+    "artifactName": "${productName}-${version}-Setup.${ext}"
+  },
+  "nsis": {
+    "oneClick": false,
+    "perMachine": false,
+    "allowToChangeInstallationDirectory": true,
+    "deleteAppDataOnUninstall": false
+  },
+  "mac": {
+    "target": ["dmg"],
+    "artifactName": "${productName}-${version}.${ext}"
+  },
+  "linux": {
     "target": ["AppImage"],
     "artifactName": "${productName}-${version}.${ext}"
   }
