@@ -11,12 +11,26 @@ Editor y visor de Markdown para escritorio con integración Git.
 
 - **Editor de Markdown**: Edita y visualiza archivos .md con vista dividida (editor + preview)
 - **Explorador de archivos**: Navega por tu carpeta de documentos en una barra lateral al estilo Obsidian
+  - Botón para cerrar todas las carpetas
+  - Botón para encontrar el archivo actual
+  - Menú contextual (click derecho) para crear y eliminar archivos/carpetas
+- **Gestión de archivos**:
+  - Crear nuevas carpetas
+  - Crear nuevos archivos .md
+  - Eliminar archivos/carpetas con confirmación
 - **Integración Git**: Clone, pull, push y commit directamente desde la aplicación
-- **Autenticación SSH**: Configura tu clave SSH paraGit (ruta o contenido)
+- **Autenticación SSH**: Configura tu clave SSH para Git (ruta o contenido)
 - **Terminal integrada**: Ejecuta comandos PowerShell directamente en la barra de estado
 - **Soporte GFM**: Tablas, checkboxes, código con resaltado de sintaxis
+- **Imágenes**:
+  - Imágenes desde URLs externas (`![alt](url)`)
+  - Wiki-links embebidos (`![[imagen.png]]`)
+  - Selector de imágenes integrado (botón en toolbar)
+  - Carga de imágenes locales como base64
+- **Scroll sincronizado**: Desplazamiento sincronizado entre editor y preview en modo dividida
 - **Temas claro/oscuro**: Cambio de tema con persistencia de preferencias
 - **Múltiples pestañas**: Trabaja con varios archivos simultáneamente
+- **Icono de aplicación**: Icono personalizado para Windows
 
 ## Capturas de pantalla
 
