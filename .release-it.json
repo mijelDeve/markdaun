@@ -1,4 +1,7 @@
 {
+  "git": {
+    "tagName": "v${version}"
+  },
   "plugins": {
     "@release-it/conventional-changelog": {
       "preset": "angular",
@@ -6,12 +9,15 @@
     }
   },
   "github": {
-    "release": true
+    "release": true,
+    "autoGenerate": true
   },
   "npm": {
-    "publish": false
+    "publish": false,
+    "version": "${version}"
   },
   "hooks": {
-    "before:release": "npm run build"
-  }
+    "before:init": "npm run build"
+  },
+  "increment": false
 }
