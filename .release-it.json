@@ -13,11 +13,9 @@
     "autoGenerate": true
   },
   "npm": {
-    "publish": false,
-    "version": "${version}"
+    "publish": false
   },
   "hooks": {
     "before:init": "npm run build"
-  },
-  "increment": false
+  }
 }
