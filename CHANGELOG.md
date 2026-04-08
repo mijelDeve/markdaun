@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.2](https://github.com/mijelDeve/markdaun/compare/v1.0.1...v1.0.2) (2026-04-08)
+
+
+### Bug Fixes
+
+* update release-it config ([91b88cf](https://github.com/mijelDeve/markdaun/commit/91b88cf1923d80e3ec14e95b012a21c785d479a6))
+
 All notable changes to this project will be documented in this file.
 
 ## [1.0.1] - 2026-04-08

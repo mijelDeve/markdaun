@@ -1,6 +1,6 @@
 {
   "name": "markdaun",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Visor y Editor de Markdown para escritorio",
   "main": "./out/main/index.js",
   "author": "markdaun",
