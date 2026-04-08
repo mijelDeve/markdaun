@@ -18,11 +18,16 @@
     "build:unpack": "npm run build && electron-builder --dir",
     "build:win": "npm run build && electron-builder --win",
     "build:mac": "npm run build && electron-builder --mac",
-    "build:linux": "npm run build && electron-builder --linux"
+    "build:linux": "npm run build && electron-builder --linux",
+    "release": "release-it",
+    "release:patch": "release-it patch",
+    "release:minor": "release-it minor",
+    "release:major": "release-it major"
   },
   "dependencies": {
     "@electron-toolkit/preload": "^3.0.1",
     "@electron-toolkit/utils": "^3.0.0",
+    "@flowershow/remark-wiki-link": "^3.4.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "electron-log": "^5.2.4",
@@ -32,7 +37,6 @@
     "react-markdown": "^9.0.1",
     "react-syntax-highlighter": "^15.6.1",
     "remark-gfm": "^4.0.0",
-    "@flowershow/remark-wiki-link": "^3.4.0",
     "simple-git": "^3.35.2",
     "tailwind-merge": "^3.5.0"
   },
@@ -40,6 +44,7 @@
     "@electron-toolkit/eslint-config-prettier": "^2.0.0",
     "@electron-toolkit/eslint-config-ts": "^2.0.0",
     "@electron-toolkit/tsconfig": "^1.0.1",
+    "@release-it/conventional-changelog": "^10.0.6",
     "@types/node": "^22.10.5",
     "@types/react": "^18.3.18",
     "@types/react-dom": "^18.3.5",
@@ -52,6 +57,7 @@
     "eslint": "^8.57.1",
     "postcss": "^8.5.8",
     "prettier": "^3.4.2",
+    "release-it": "^19.2.4",
     "tailwindcss": "^3.4.19",
     "typescript": "^5.7.3",
     "vite": "^5.4.11"
