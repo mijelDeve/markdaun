@@ -36,25 +36,11 @@ Editor y visor de Markdown para escritorio con integración Git.
 
 ### Modo Claro
 
-```
-┌─────────────────────────────────────────────────────────┐
-│ 📁 MiRepositorio  🌿 main → origin/main  ✓  🖥️        │
-├────────────┬────────────────────────────────────────────┤
-│ 📂 raíz    │  # Título del Documento                    │
-│ └─ 📄 uno  │                                            │
-│ └─ 📄 dos  │  Este es un **texto** con markdown.       │
-│            │                                            │
-│            │ ## Sección                               │
-│            │ - Item 1                                  │
-│            │ - Item 2                                  │
-├────────────┴────────────────────────────────────────────┤
-│ [Editar] [Vista Previa]                                 │
-└─────────────────────────────────────────────────────────┘
-```
+![Markdaun Modo Claro](./docs/assets/screenshot-light.png)
 
 ### Modo Oscuro
 
-El modo oscuro utiliza una paleta de colores optimizada para reducir la fatiga visual durante sesiones de trabajo prolongadas.
+![Markdaun Modo Oscuro](./docs/assets/screenshot-dark.png)
 
 ## Instalación
 
