@@ -1,7 +1,8 @@
 {
   "git": {
     "tagName": "v${version}",
-    "push": false
+    "push": false,
+    "requireUpstream": false
   },
   "plugins": {
     "@release-it/conventional-changelog": {
