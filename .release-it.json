@@ -1,6 +1,7 @@
 {
   "git": {
-    "tagName": "v${version}"
+    "tagName": "v${version}",
+    "push": false
   },
   "plugins": {
     "@release-it/conventional-changelog": {
