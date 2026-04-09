@@ -1,5 +1,12 @@
 # Changelog
 
+# [1.1.0](https://github.com/mijelDeve/markdaun/compare/v1.0.2...v1.1.0) (2026-04-09)
+
+
+### Features
+
+* add settings panel with theme customization ([536b2be](https://github.com/mijelDeve/markdaun/commit/536b2be992ff4798554235ab5e4ae96bc572ae12))
+
 ## [1.0.2](https://github.com/mijelDeve/markdaun/compare/v1.0.1...v1.0.2) (2026-04-08)
 
 
