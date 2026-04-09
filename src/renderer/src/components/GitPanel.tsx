@@ -249,7 +249,7 @@ export function GitPanel({
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div className="bg-background border rounded-lg w-[600px] max-h-[80vh] overflow-hidden flex flex-col">
+      <div className="bg-background/80 backdrop-blur-sm border rounded-lg w-[600px] max-h-[80vh] overflow-hidden flex flex-col border-border/50">
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-3 border-b">
           <div className="flex items-center gap-2">

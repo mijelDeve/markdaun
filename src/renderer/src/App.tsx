@@ -19,6 +19,7 @@ import {
   Download,
   Upload,
   Image,
+  Settings,
 } from "lucide-react";
 import { Button } from "./components/ui/button";
 import { ScrollArea } from "./components/ui/scroll-area";
@@ -27,6 +28,8 @@ import { GitPanel } from "./components/GitPanel";
 import { GitStatusBar } from "./components/GitStatusBar";
 import { cn } from "./lib/utils";
 import type { FileNode } from "../preload/index";
+import { SettingsModal } from "./components/SettingsModal";
+import { WindowControls } from "./components/WindowControls";
 
 function LocalImage({ src, alt }: { src: string; alt: string }) {
   const [dataUrl, setDataUrl] = useState<string | null>(null);
@@ -89,6 +92,11 @@ function App(): JSX.Element {
       message: string;
     }[]
   >([]);
+  const [showSettings, setShowSettings] = useState(false);
+  const [backgroundMaterial, setBackgroundMaterial] =
+    useState<string>("acrylic");
+  const [fontSize, setFontSize] = useState(16);
+  const [fontFamily, setFontFamily] = useState("system-ui");
 
   const editorRef = useRef<HTMLTextAreaElement>(null);
   const previewRef = useRef<HTMLDivElement>(null);
@@ -144,6 +152,73 @@ function App(): JSX.Element {
 
     loadGitStatus();
   }, [folderPath]);
+
+  const applyCustomTheme = useCallback(
+    (config: {
+      colors: {
+        primary: string;
+        secondary: string;
+        background: string;
+        surface: string;
+        text: { primary: string; secondary: string; disabled: string };
+        border: string;
+        error: string;
+        success: string;
+        warning: string;
+      };
+      blur: number;
+      fontSize: number;
+      fontFamily: string;
+    }) => {
+      const root = document.documentElement;
+      root.style.setProperty("--theme-primary", config.colors.primary);
+      root.style.setProperty("--theme-secondary", config.colors.secondary);
+      root.style.setProperty("--theme-background", config.colors.background);
+      root.style.setProperty("--theme-surface", config.colors.surface);
+      root.style.setProperty(
+        "--theme-text-primary",
+        config.colors.text.primary,
+      );
+      root.style.setProperty(
+        "--theme-text-secondary",
+        config.colors.text.secondary,
+      );
+      root.style.setProperty(
+        "--theme-text-disabled",
+        config.colors.text.disabled,
+      );
+      root.style.setProperty("--theme-border", config.colors.border);
+      root.style.setProperty("--theme-error", config.colors.error);
+      root.style.setProperty("--theme-success", config.colors.success);
+      root.style.setProperty("--theme-warning", config.colors.warning);
+      setBlur(config.blur);
+      setFontSize(config.fontSize);
+      setFontFamily(config.fontFamily);
+    },
+    [],
+  );
+
+  const loadThemeConfig = useCallback(async () => {
+    try {
+      const config = await window.api.themeGetConfig();
+      if (config) {
+        applyCustomTheme(config);
+        if (config.backgroundMaterial) {
+          setBackgroundMaterial(config.backgroundMaterial);
+          window.api.setBackgroundMaterial(config.backgroundMaterial);
+        }
+      } else {
+        window.api.setBackgroundMaterial("acrylic");
+      }
+    } catch (err) {
+      console.error("Error loading theme config:", err);
+      window.api.setBackgroundMaterial("acrylic");
+    }
+  }, [applyCustomTheme]);
+
+  useEffect(() => {
+    loadThemeConfig();
+  }, [loadThemeConfig]);
 
   const handleOpenFolder = useCallback(async () => {
     const result = await window.api.openFolder();
@@ -489,8 +564,21 @@ function App(): JSX.Element {
 
   return (
     <div className={cn("h-screen flex flex-col", theme === "dark" && "dark")}>
+      {/* Title bar */}
+      <div
+        className="flex items-center justify-between h-8 px-2 bg-muted/50 border-b cursor-default"
+        style={{ WebkitAppRegion: "drag" } as React.CSSProperties}
+      >
+        <span className="text-xs font-medium text-muted-foreground px-2">
+          Markdaun
+        </span>
+        <div style={{ WebkitAppRegion: "no-drag" } as React.CSSProperties}>
+          <WindowControls theme={theme} />
+        </div>
+      </div>
+
       {/* Toolbar */}
-      <div className="flex items-center gap-2 px-4 py-2 border-b bg-card text-card-foreground">
+      <div className="flex items-center gap-2 px-4 py-2 border-b bg-card/80 text-card-foreground backdrop-blur-sm">
         <Button
           variant="ghost"
           size="sm"
@@ -604,6 +692,14 @@ function App(): JSX.Element {
         >
           <GitBranch className="w-4 h-4" />
         </Button>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="dark:text-white dark:hover:bg-accent"
+          onClick={() => setShowSettings(true)}
+        >
+          <Settings className="w-4 h-4" />
+        </Button>
       </div>
 
       <div className="flex-1 flex overflow-hidden">
@@ -622,14 +718,14 @@ function App(): JSX.Element {
         <div className="flex-1 flex flex-col overflow-hidden">
           {/* Tabs */}
           {tabs.length > 0 && (
-            <div className="flex items-center gap-1 px-2 py-1 bg-muted border-b overflow-x-auto">
+            <div className="flex items-center gap-1 px-2 py-1 bg-muted/80 backdrop-blur-sm border-b overflow-x-auto">
               {tabs.map((tab, index) => (
                 <div
                   key={index}
                   className={cn(
                     "flex items-center gap-2 px-3 py-1 text-sm rounded cursor-pointer transition-colors",
                     index === activeTab
-                      ? "bg-background text-foreground"
+                      ? "bg-background/80 backdrop-blur-sm text-foreground"
                       : "text-muted-foreground hover:bg-background/50",
                   )}
                   onClick={() => setActiveTab(index)}
@@ -656,8 +752,8 @@ function App(): JSX.Element {
           {/* Editor / Preview */}
           <div className="flex-1 flex overflow-hidden">
             {!activeFile ? (
-              <div className="flex-1 flex items-center justify-center text-muted-foreground">
-                <div className="text-center">
+              <div className="flex-1 flex items-center justify-center text-muted-foreground bg-background/50 backdrop-blur-sm">
+                <div className="text-center bg-card/80 backdrop-blur-sm p-8 rounded-lg border border-border/30">
                   <FileText className="w-16 h-16 mx-auto mb-4 opacity-20" />
                   <p className="text-xl mb-4 font-medium">Markdaun</p>
                   <p className="text-sm mb-4">
@@ -680,7 +776,11 @@ function App(): JSX.Element {
                 {(viewMode === "edit" || viewMode === "split") && (
                   <textarea
                     ref={editorRef}
-                    className="flex-1 p-4 border-r resize-none focus:outline-none bg-background text-foreground"
+                    className="flex-1 p-4 border-r resize-none focus:outline-none bg-background/80 backdrop-blur-sm text-foreground"
+                    style={{
+                      fontSize: `${fontSize}px`,
+                      fontFamily: fontFamily,
+                    }}
                     value={activeFile.content}
                     onChange={(e) => handleContentChange(e.target.value)}
                     placeholder="Escribe tu markdown aquí..."
@@ -708,7 +808,7 @@ function App(): JSX.Element {
                   <ScrollArea
                     ref={previewRef}
                     className={cn(
-                      "flex-1 p-4 bg-background",
+                      "flex-1 p-4 bg-background/80 backdrop-blur-sm",
                       viewMode === "split" && "border-l",
                     )}
                     onScroll={(e) => {
@@ -857,7 +957,7 @@ function App(): JSX.Element {
           </div>
 
           {/* Status bar */}
-          <div className="flex items-center justify-between px-4 py-1 text-xs text-muted-foreground border-t bg-muted">
+          <div className="flex items-center justify-between px-4 py-1 text-xs text-muted-foreground border-t bg-muted/80 backdrop-blur-sm">
             <span className="truncate">
               {activeFile?.path || "Sin archivo"}
             </span>
@@ -934,6 +1034,22 @@ function App(): JSX.Element {
           }}
         />
       )}
+
+      <SettingsModal
+        isOpen={showSettings}
+        onClose={() => setShowSettings(false)}
+        onThemeChange={setTheme}
+        currentTheme={theme}
+        currentBackgroundMaterial={backgroundMaterial}
+        onBackgroundMaterialChange={(material) => {
+          setBackgroundMaterial(material);
+          window.api.setBackgroundMaterial(material);
+        }}
+        currentFontSize={fontSize}
+        onFontSizeChange={setFontSize}
+        currentFontFamily={fontFamily}
+        onFontFamilyChange={setFontFamily}
+      />
     </div>
   );
 }

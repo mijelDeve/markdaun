@@ -46,6 +46,28 @@ export type GitConnectionTest = {
   message?: string;
 };
 
+export type ThemeConfig = {
+  theme: "light" | "dark";
+  backgroundMaterial: string;
+  fontSize: number;
+  fontFamily: string;
+  colors: {
+    primary: string;
+    secondary: string;
+    background: string;
+    surface: string;
+    text: {
+      primary: string;
+      secondary: string;
+      disabled: string;
+    };
+    border: string;
+    error: string;
+    success: string;
+    warning: string;
+  };
+};
+
 export interface ElectronAPI {
   openFile: () => Promise<FileData | null>;
   openFolder: () => Promise<FolderData | null>;
@@ -91,6 +113,26 @@ export interface ElectronAPI {
     command: string,
     cwd?: string,
   ) => Promise<{ success: boolean; output: string; error?: string }>;
+
+  // Theme API
+  themeGetConfig: () => Promise<ThemeConfig | null>;
+  themeSetConfig: (config: ThemeConfig) => Promise<boolean>;
+  themeGetConfigPath: () => Promise<string | null>;
+
+  // Window controls
+  windowMinimize: () => void;
+  windowMaximize: () => void;
+  windowClose: () => void;
+  windowIsMaximized: () => Promise<boolean>;
+  onWindowMaximizedChange: (
+    callback: (isMaximized: boolean) => void,
+  ) => () => void;
+
+  // Desktop background
+  getDesktopBackground: () => Promise<string | null>;
+
+  // Background material (Mica/Acrylic/Tabbed)
+  setBackgroundMaterial: (material: string) => void;
 }
 
 declare global {

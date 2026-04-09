@@ -1,4 +1,12 @@
-import { app, shell, BrowserWindow, ipcMain, dialog } from "electron";
+import {
+  app,
+  shell,
+  BrowserWindow,
+  ipcMain,
+  dialog,
+  desktopCapturer,
+  screen,
+} from "electron";
 import { join } from "path";
 import { electronApp, optimizer, is } from "@electron-toolkit/utils";
 import log from "electron-log/main";
@@ -25,6 +33,9 @@ function createWindow(): void {
     minHeight: 600,
     show: false,
     autoHideMenuBar: false,
+    frame: false,
+    transparent: true,
+    backgroundColor: "#00000000",
     webPreferences: {
       preload: join(__dirname, "../preload/index.js"),
       sandbox: false,
@@ -38,6 +49,14 @@ function createWindow(): void {
     log.info("Main window shown");
   });
 
+  mainWindow.on("maximize", () => {
+    mainWindow.webContents.send("window:maximized-changed", true);
+  });
+
+  mainWindow.on("unmaximize", () => {
+    mainWindow.webContents.send("window:maximized-changed", false);
+  });
+
   mainWindow.webContents.setWindowOpenHandler((details) => {
     shell.openExternal(details.url);
     return { action: "deny" };
@@ -48,6 +67,60 @@ function createWindow(): void {
   } else {
     mainWindow.loadFile(join(__dirname, "../renderer/index.html"));
   }
+
+  ipcMain.on("window:minimize", () => {
+    mainWindow.minimize();
+  });
+
+  ipcMain.on("window:maximize", () => {
+    if (mainWindow.isMaximized()) {
+      mainWindow.unmaximize();
+    } else {
+      mainWindow.maximize();
+    }
+  });
+
+  ipcMain.on("window:close", () => {
+    mainWindow.close();
+  });
+
+  ipcMain.handle("window:isMaximized", () => {
+    return mainWindow.isMaximized();
+  });
+
+  ipcMain.on("window:setBackgroundMaterial", (_, material: string) => {
+    try {
+      mainWindow.setBackgroundMaterial(material as any);
+      log.info(`Background material set to: ${material}`);
+    } catch (error) {
+      log.error("Error setting background material:", error);
+    }
+  });
+
+  ipcMain.handle("desktop:getBackground", async () => {
+    try {
+      const primaryDisplay = screen.getPrimaryDisplay();
+      const { width, height } = primaryDisplay.size;
+      const scaleFactor = primaryDisplay.scaleFactor;
+
+      const sources = await desktopCapturer.getSources({
+        types: ["screen"],
+        thumbnailSize: {
+          width: Math.floor(width * scaleFactor),
+          height: Math.floor(height * scaleFactor),
+        },
+      });
+
+      if (sources.length > 0) {
+        const primarySource = sources[0];
+        return primarySource.thumbnail.toDataURL();
+      }
+      return null;
+    } catch (error) {
+      log.error("Error getting desktop background:", error);
+      return null;
+    }
+  });
 }
 
 app.whenReady().then(() => {
@@ -570,6 +643,41 @@ app.whenReady().then(() => {
         },
       );
     });
+  });
+
+  // Theme config handlers
+  const themeConfigPath = join(app.getPath("userData"), "theme-config.json");
+
+  ipcMain.handle("theme:getConfig", async () => {
+    try {
+      if (fs.existsSync(themeConfigPath)) {
+        return JSON.parse(fs.readFileSync(themeConfigPath, "utf-8"));
+      }
+      return null;
+    } catch (error) {
+      log.error("Error reading theme config:", error);
+      return null;
+    }
+  });
+
+  ipcMain.handle("theme:setConfig", async (_, config) => {
+    try {
+      fs.writeFileSync(themeConfigPath, JSON.stringify(config, null, 2));
+      return true;
+    } catch (error) {
+      log.error("Error saving theme config:", error);
+      return false;
+    }
+  });
+
+  ipcMain.handle("theme:getConfigFile", async () => {
+    try {
+      const userDataPath = app.getPath("userData");
+      return join(userDataPath, "theme-config.json");
+    } catch (error) {
+      log.error("Error getting config file path:", error);
+      return null;
+    }
   });
 
   createWindow();

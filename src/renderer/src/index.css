@@ -24,6 +24,22 @@
     --input: 0 0% 88%;
     --ring: 0 0% 25%;
     --radius: 0.5rem;
+
+    /* Custom theme variables */
+    --custom-primary: #4f46e5;
+    --custom-secondary: #06b6d4;
+    --custom-background: #0f172a;
+    --custom-surface: #1e293b;
+    --custom-text-primary: #ffffff;
+    --custom-text-secondary: #94a3b8;
+    --custom-text-disabled: #64748b;
+    --custom-border: #334155;
+    --custom-error: #ef4444;
+    --custom-success: #22c55e;
+    --custom-warning: #f59e0b;
+    --app-transparency: 1;
+    --app-font-size: 14px;
+    --app-font-family: monospace;
   }
 
   .dark {
@@ -53,8 +69,17 @@
   * {
     @apply border-border;
   }
+  html,
+  body,
+  #root {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    overflow: hidden;
+    background: transparent !important;
+  }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-transparent text-foreground;
     font-family:
       -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen",
       "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue",
@@ -70,6 +95,7 @@ body,
   height: 100%;
   margin: 0;
   padding: 0;
+  background: transparent;
 }
 
 /* Scrollbar styles */
@@ -112,7 +138,7 @@ body,
 }
 
 .preview {
-  @apply bg-background text-foreground;
+  @apply bg-transparent text-foreground;
 }
 
 .preview h1 {
@@ -183,7 +209,16 @@ body,
   @apply text-foreground/80;
 }
 .preview.dark code {
-  @apply bg-muted text-foreground;
+  @apply bg-muted/70 text-foreground;
+}
+.preview.dark pre {
+  @apply bg-muted/70 text-foreground;
+}
+.preview.dark blockquote {
+  @apply border-muted-foreground/50 text-muted-foreground;
+}
+.preview.dark th {
+  @apply bg-muted/50;
 }
 .preview.dark pre {
   @apply bg-muted text-foreground;

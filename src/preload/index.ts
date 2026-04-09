@@ -48,6 +48,28 @@ export type GitConnectionTest = {
   message?: string;
 };
 
+export type ThemeConfig = {
+  theme: "light" | "dark";
+  backgroundMaterial: string;
+  fontSize: number;
+  fontFamily: string;
+  colors: {
+    primary: string;
+    secondary: string;
+    background: string;
+    surface: string;
+    text: {
+      primary: string;
+      secondary: string;
+      disabled: string;
+    };
+    border: string;
+    error: string;
+    success: string;
+    warning: string;
+  };
+};
+
 const api = {
   openFile: (): Promise<FileData | null> =>
     ipcRenderer.invoke("dialog:openFile"),
@@ -117,6 +139,35 @@ const api = {
     cwd?: string,
   ): Promise<{ success: boolean; output: string; error?: string }> =>
     ipcRenderer.invoke("system:exec", command, cwd),
+
+  // Theme API
+  themeGetConfig: (): Promise<ThemeConfig | null> =>
+    ipcRenderer.invoke("theme:getConfig"),
+  themeSetConfig: (config: ThemeConfig): Promise<boolean> =>
+    ipcRenderer.invoke("theme:setConfig", config),
+  themeGetConfigPath: (): Promise<string | null> =>
+    ipcRenderer.invoke("theme:getConfigFile"),
+
+  // Window controls
+  windowMinimize: (): void => ipcRenderer.send("window:minimize"),
+  windowMaximize: (): void => ipcRenderer.send("window:maximize"),
+  windowClose: (): void => ipcRenderer.send("window:close"),
+  windowIsMaximized: (): Promise<boolean> =>
+    ipcRenderer.invoke("window:isMaximized"),
+  onWindowMaximizedChange: (callback: (isMaximized: boolean) => void) => {
+    const handler = (_: any, isMaximized: boolean) => callback(isMaximized);
+    ipcRenderer.on("window:maximized-changed", handler);
+    return () =>
+      ipcRenderer.removeListener("window:maximized-changed", handler);
+  },
+
+  // Desktop background
+  getDesktopBackground: (): Promise<string | null> =>
+    ipcRenderer.invoke("desktop:getBackground"),
+
+  // Background material (Mica/Acrylic/Tabbed)
+  setBackgroundMaterial: (material: string): void =>
+    ipcRenderer.send("window:setBackgroundMaterial", material),
 };
 
 if (process.contextIsolated) {

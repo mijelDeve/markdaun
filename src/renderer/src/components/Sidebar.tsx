@@ -391,7 +391,7 @@ export function Sidebar({
   const folderName = folderPath?.split(/[\\/]/).pop() || null;
 
   return (
-    <div className="w-64 flex-shrink-0 bg-card border-r border-border flex flex-col relative">
+    <div className="w-64 flex-shrink-0 bg-card/80 backdrop-blur-sm border-r border-border flex flex-col relative">
       {folderName ? (
         <div className="p-2 border-b border-border flex gap-2">
           <Button

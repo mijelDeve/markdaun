@@ -139,7 +139,7 @@ export function GitStatusBar({
   };
 
   return (
-    <div className="border-t bg-card">
+    <div className="border-t bg-card/80 backdrop-blur-sm">
       {/* Barra resumida - siempre visible */}
       <div
         className="flex items-center justify-between px-3 py-1.5 cursor-pointer hover:bg-muted/50"
