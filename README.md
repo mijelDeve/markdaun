@@ -1,4 +1,4 @@
-# Markdaun
+# Loom
 
 Editor y visor de Markdown para escritorio con integración Git.
 
